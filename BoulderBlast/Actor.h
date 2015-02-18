@@ -7,7 +7,7 @@
 class StudentWorld;
 
 //BASE CLASS//
-class Actor : public GraphObject
+class Actor : public GraphObject	//Actor is any item in the game that takes up a square and can interact with other Actors
 {
 public:
 	Actor(int imageID, int startX, int startY, int health, StudentWorld* world, Direction dir = none)

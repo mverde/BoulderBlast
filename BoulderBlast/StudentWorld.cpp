@@ -10,7 +10,7 @@ GameWorld* createStudentWorld(string assetDir)
 int StudentWorld::init()
 {
 	m_bonus = 1000;
-	string curlevel = "level00.dat";
+	string curlevel = "level00.dat";	//placeholder for level progression
 	Level lev(assetDirectory());
 	Level::LoadResult result = lev.loadLevel(curlevel);
 
@@ -42,9 +42,9 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-	string stats = "Score: 0321000  Level: 05  Lives:  3  Health:  70%  Ammo:  20  Bonus:  724";
+	string stats = "Score: 0321000  Level: 05  Lives:  3  Health:  70%  Ammo:  20  Bonus:  724";	//placeholder for stats update
 	setGameStatText(stats);	//TODO: parse these values in correct format
-	m_player->doSomething();
+	m_player->doSomething();	//allow all actors to doSomething
 	if (m_bonus > 0)
 		m_bonus--;
 

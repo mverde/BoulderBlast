@@ -6,7 +6,7 @@ using namespace std;
 // Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 //PLAYER IMPLEMENTATIONS//
-void Player::doSomething()
+void Player::doSomething()	//TODO: implement shooting, dying, picking up items, pushing boulders
 {
 	if (!isAlive())
 		return;
