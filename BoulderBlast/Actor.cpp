@@ -1,9 +1,92 @@
 #include <vector>
 #include "Actor.h"
 #include "StudentWorld.h"
+#include <iostream>
 using namespace std;
 
-// Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
+//BULLET IMPLEMENTATIONS//
+bool Bullet::doBullet()	//returns false if dead
+{
+	vector<Actor*> actors = getWorld()->getActors();
+	for (int i = 0; i < actors.size(); i++)
+	{
+		Wall* wall = dynamic_cast<Wall*>(actors[i]);	//TODO: add factory case
+		Organism* organism = dynamic_cast<Organism*>(actors[i]);
+
+		if (actors[i]->getX() == getX() && actors[i]->getY() == getY())
+		{
+			if (organism != nullptr)
+			{
+				organism->getHit();
+				organism->onHit();
+				setDead();
+				return false;
+			}
+			else if (wall != nullptr)
+			{
+				setDead();
+				return false;
+			}
+		}
+	}
+
+	Player* player = getWorld()->getPlayer();
+	if (player->getX() == getX() && player->getY() == getY())
+	{
+		player->getHit();
+		player->onHit();
+		setDead();
+		return false;
+	}
+	return true;
+}
+
+void Bullet::doSomething()
+{
+	if (!isAlive())
+		return;
+	
+	bool doAgain = doBullet();
+	switch (getDirection())
+	{
+	case up:
+		moveTo(getX(), getY() + 1);
+		break;
+	case down:
+		moveTo(getX(), getY() - 1);
+		break;
+	case left:
+		moveTo(getX() - 1, getY());
+		break;
+	case right:
+		moveTo(getX() + 1, getY());
+		break;
+	}
+
+	if (doAgain)
+		doBullet();
+}
+
+//HOLE IMPLEMENTATIONS//
+void Hole::doSomething()
+{
+	if (!isAlive())
+		return;
+
+	vector<Actor*> actors = getWorld()->getActors();
+	for (int i = 0; i < actors.size(); i++)
+	{
+		if (actors[i]->getX() == getX() && actors[i]->getY() == getY())
+		{
+			Boulder* boulder = dynamic_cast<Boulder*>(actors[i]);
+			if (boulder != nullptr)
+			{
+				boulder->setDead();
+				setDead();
+			}
+		}
+	}
+}
 
 //PLAYER IMPLEMENTATIONS//
 void Player::doSomething()	//TODO: implement shooting, dying, picking up items, pushing boulders
@@ -21,6 +104,21 @@ void Player::doSomething()	//TODO: implement shooting, dying, picking up items, 
 			break;
 		case KEY_PRESS_SPACE:
 			getWorld()->playSound(SOUND_PLAYER_FIRE);
+			switch (getDirection())
+			{
+			case up:
+				getWorld()->createBullet(getX(), getY() + 1, getWorld(), up);
+				break;
+			case down:
+				getWorld()->createBullet(getX(), getY() - 1, getWorld(), down);
+				break;
+			case left:
+				getWorld()->createBullet(getX() - 1, getY(), getWorld(), left);
+				break;
+			case right:
+				getWorld()->createBullet(getX() + 1, getY(), getWorld(), right);
+				break;
+			}
 			break;
 		case KEY_PRESS_UP:
 			setDirection(up);
@@ -50,17 +148,101 @@ void Player::doSomething()	//TODO: implement shooting, dying, picking up items, 
 
 void Player::onHit()
 {
-	return;
+	if (getHealth() > 0)
+		getWorld()->playSound(SOUND_PLAYER_IMPACT);
+	else
+	{
+		getWorld()->playSound(SOUND_PLAYER_DIE);
+		setDead();
+	}
 }
 
-bool Player::canMove(int x, int y) const
-{
+bool Player::canMove(const int& x, const int& y) const
+{	
+	if (x > 15 || x < 0 || y > 15 || y < 0)
+		return false;
+
 	vector<Actor*> actors = getWorld()->getActors();
-	
 	for (int i = 0; i < actors.size(); i++)
 	{
 		if (actors[i]->getX() == x && actors[i]->getY() == y)
-			return false;
+		{
+			Boulder* boulder = dynamic_cast<Boulder*>(actors[i]);
+			if (boulder != nullptr)
+			{
+				bool moveB;
+				switch (getDirection())
+				{
+				case up:
+					moveB = boulder->canMove(x, y + 1);
+					break;
+				case down:
+					moveB = boulder->canMove(x, y - 1);
+					break;
+				case left:
+					moveB = boulder->canMove(x - 1, y);
+					break;
+				case right:
+					moveB = boulder->canMove(x + 1, y);
+					break;
+				}
+
+				if (moveB)
+				{
+					boulder->push(x, y, getDirection());
+					return true;
+				}
+				else
+					return false;
+			}
+			else if (!actors[i]->canBeSteppedOn())
+				return false;
+		}
 	}
 	return true;
+}
+
+//BOULDER IMPLEMENTATIONS//
+void Boulder::onHit()
+{
+	if (getHealth() <= 0)
+		setDead();
+}
+
+bool Boulder::canMove(const int& x, const int& y) const
+{
+	if (x > 15 || x < 0 || y > 15 || y < 0)
+		return false;
+
+	vector<Actor*> actors = getWorld()->getActors();
+	for (int i = 0; i < actors.size(); i++)
+	{
+		Hole* hole = dynamic_cast<Hole*>(actors[i]);
+		if (actors[i]->getX() == x && actors[i]->getY() == y)
+		{
+			if (hole != nullptr)
+				return true;
+			return false;
+		}
+	}
+	return true;
+}
+
+void Boulder::push(const int& x, const int& y, const Direction& dir)
+{
+	switch (dir)
+	{
+	case up:
+		moveTo(x, y + 1);
+		break;
+	case down:
+		moveTo(x, y - 1);
+		break;
+	case left:
+		moveTo(x - 1, y);
+		break;
+	case right:
+		moveTo(x + 1, y);
+		break;
+	}
 }
