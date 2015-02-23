@@ -10,7 +10,7 @@ using namespace std;
 GameWorld* createStudentWorld(string assetDir)
 { return new StudentWorld(assetDir); }
 
-string StudentWorld::formatLevel(const int& lev)
+string StudentWorld::formatLevel(const int& lev)	//used for loading each new level
 {
 	string dat = "level";
 	if (lev < 10)
@@ -28,7 +28,7 @@ string StudentWorld::formatLevel(const int& lev)
 	return dat;
 }
 
-string StudentWorld::formatNum(const int& num, const int& digits, const bool& spaces)
+string StudentWorld::formatNum(const int& num, const int& digits, const bool& spaces)	//used for displaying stats
 {
 	stack<char> chars;
 	string str;
@@ -51,7 +51,7 @@ string StudentWorld::formatNum(const int& num, const int& digits, const bool& sp
 
 		while (!g0Found)
 		{
-			if (str[i] > '0' && str[i] <= '9')
+			if (str[i] > '0' && str[i] <= '9' || i == str.length() - 1)
 				g0Found = true;
 			else
 				str[i] = ' ';
@@ -64,31 +64,31 @@ string StudentWorld::formatNum(const int& num, const int& digits, const bool& sp
 
 string StudentWorld::formatDisplayText(const int& score, const int& level, const int& lives, const int& health, const int& ammo, const int& bonus)
 {
-	string display = "Score: ";	//format score
+	string display = "Score: ";
 	string next = formatNum(score, 7, false);
 
-	display += next + "  Level: ";	//format level
+	display += next + "  Level: ";
 	next = formatNum(level, 2, false);
 
-	display += next + "  Lives: ";	//format lives
+	display += next + "  Lives: ";
 	next = formatNum(lives, 2, true);
 
-	display += next + "  Health: ";	//format health percentage
+	display += next + "  Health: ";
 	double healthPD = (double)health / 20 * 100;
 	int healthPI = (int)healthPD;
 	next = formatNum(healthPI, 3, true);
 
-	display += next + "%  Ammo: ";	//format ammo
+	display += next + "%  Ammo: ";
 	next = formatNum(ammo, 3, true);
 
-	display += next + "  Bonus: ";	//format bonus
+	display += next + "  Bonus: ";
 	next = formatNum(m_bonus, 4, true);
 	display += next;
 
 	return display;
 }
 
-void StudentWorld::setDisplayText()
+void StudentWorld::setDisplayText()	//gets stats, formats display text, and displays it
 {
 	int score = getScore();
 	int level = getLevel();
@@ -118,8 +118,8 @@ void StudentWorld::createBullet(const int& x, const int& y, StudentWorld* world,
 	m_actors.push_back(new Bullet(x, y, this, dir));
 }
 
-int StudentWorld::init()
-{
+int StudentWorld::init()	//loads current level and creates starting actors
+{							//TODO: create all actors after implementing them
 	m_bonus = 1000;
 	Level lev(assetDirectory());
 	Level::LoadResult result = lev.loadLevel(formatLevel(getLevel()));
@@ -156,8 +156,8 @@ int StudentWorld::init()
 	return GWSTATUS_CONTINUE_GAME;
 }
 
-int StudentWorld::move()
-{
+int StudentWorld::move()	//plays a tick
+{							//TODO: implement exiting the level when all jewels are collected
 	setDisplayText();
 
 	m_player->doSomething();	//allow all actors to doSomething
@@ -181,7 +181,7 @@ int StudentWorld::move()
 	return GWSTATUS_CONTINUE_GAME;
 }
 
-void StudentWorld::cleanUp()
+void StudentWorld::cleanUp()	//necessary to deallocate memory when a level is finished but the game is not over
 {
 	delete m_player;
 	for (int i = 0; i < m_actors.size();)

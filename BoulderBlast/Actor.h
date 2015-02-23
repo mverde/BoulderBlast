@@ -138,6 +138,7 @@ public:
 
 	virtual void doSomething();
 	virtual void onHit();
+	void shoot(const int& x, const int& y, Direction dir);
 	virtual bool canMove(const int& x, const int& y) const;
 	int getAmmo() const;
 
@@ -151,6 +152,7 @@ private:
 inline int Player::getAmmo() const
 { return m_ammo; }
 
+//BOULDER//
 class Boulder : public Organism
 {
 public:

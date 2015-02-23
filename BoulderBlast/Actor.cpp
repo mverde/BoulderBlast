@@ -5,7 +5,7 @@
 using namespace std;
 
 //BULLET IMPLEMENTATIONS//
-bool Bullet::doBullet()	//returns false if dead
+bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors at current location and acts appropriately
 {
 	vector<Actor*> actors = getWorld()->getActors();
 	for (int i = 0; i < actors.size(); i++)
@@ -41,7 +41,7 @@ bool Bullet::doBullet()	//returns false if dead
 	return true;
 }
 
-void Bullet::doSomething()
+void Bullet::doSomething()	//if alive, moves and hits actors if applicable
 {
 	if (!isAlive())
 		return;
@@ -68,7 +68,7 @@ void Bullet::doSomething()
 }
 
 //HOLE IMPLEMENTATIONS//
-void Hole::doSomething()
+void Hole::doSomething()	//if alive, checks for a boulder at current location to swallow
 {
 	if (!isAlive())
 		return;
@@ -89,9 +89,19 @@ void Hole::doSomething()
 }
 
 //PLAYER IMPLEMENTATIONS//
-void Player::doSomething()	//TODO: implement shooting, dying, picking up items, pushing boulders
+void Player::shoot(const int& x, const int& y, Direction dir)	//shoots a bullet and decrements ammo, if possible
 {
-	if (!isAlive())
+	if (m_ammo < 1)
+		return;
+
+	getWorld()->playSound(SOUND_PLAYER_FIRE);
+	m_ammo--;
+	getWorld()->createBullet(x, y, getWorld(), dir);
+}
+
+void Player::doSomething()	//checks for key input then does nothing, moves, shoots, or restarts
+{
+	if (!isAlive())	//TODO: implement dying, picking up items
 		return;
 
 	int key;
@@ -103,20 +113,19 @@ void Player::doSomething()	//TODO: implement shooting, dying, picking up items, 
 			setDead();
 			break;
 		case KEY_PRESS_SPACE:
-			getWorld()->playSound(SOUND_PLAYER_FIRE);
 			switch (getDirection())
 			{
 			case up:
-				getWorld()->createBullet(getX(), getY() + 1, getWorld(), up);
+				shoot(getX(), getY() + 1, up);
 				break;
 			case down:
-				getWorld()->createBullet(getX(), getY() - 1, getWorld(), down);
+				shoot(getX(), getY() - 1, down);
 				break;
 			case left:
-				getWorld()->createBullet(getX() - 1, getY(), getWorld(), left);
+				shoot(getX() - 1, getY(), left);
 				break;
 			case right:
-				getWorld()->createBullet(getX() + 1, getY(), getWorld(), right);
+				shoot(getX() + 1, getY(), right);
 				break;
 			}
 			break;
@@ -146,7 +155,7 @@ void Player::doSomething()	//TODO: implement shooting, dying, picking up items, 
 	}
 }
 
-void Player::onHit()
+void Player::onHit()	//gets hit or dies based on remaining health
 {
 	if (getHealth() > 0)
 		getWorld()->playSound(SOUND_PLAYER_IMPACT);
@@ -157,9 +166,9 @@ void Player::onHit()
 	}
 }
 
-bool Player::canMove(const int& x, const int& y) const
+bool Player::canMove(const int& x, const int& y) const	//moves to x, y if not stopped by a robot, wall, or unpushable boulder
 {	
-	if (x > 15 || x < 0 || y > 15 || y < 0)
+	if (x > 15 || x < 0 || y > 15 || y < 0)	//TODO: check for robots as well
 		return false;
 
 	vector<Actor*> actors = getWorld()->getActors();
@@ -209,7 +218,7 @@ void Boulder::onHit()
 		setDead();
 }
 
-bool Boulder::canMove(const int& x, const int& y) const
+bool Boulder::canMove(const int& x, const int& y) const	//returns true if x, y is empty or contains a hole
 {
 	if (x > 15 || x < 0 || y > 15 || y < 0)
 		return false;
@@ -228,7 +237,7 @@ bool Boulder::canMove(const int& x, const int& y) const
 	return true;
 }
 
-void Boulder::push(const int& x, const int& y, const Direction& dir)
+void Boulder::push(const int& x, const int& y, const Direction& dir)	//moves in specified direction (called only by player)
 {
 	switch (dir)
 	{
