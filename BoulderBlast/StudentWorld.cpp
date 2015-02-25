@@ -5,6 +5,8 @@
 #include <stack>
 #include <cmath>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetDir)
@@ -12,79 +14,34 @@ GameWorld* createStudentWorld(string assetDir)
 
 string StudentWorld::formatLevel(const int& lev)	//used for loading each new level
 {
+	if (lev > 99)
+		return "level100.dat";
+
 	string dat = "level";
-	if (lev < 10)
-	{
-		dat += '0';
-		dat += lev + TO_CHAR;
-	}
-	else
-	{
-		dat += (lev / 10) + TO_CHAR;
-		dat += lev % 10 + TO_CHAR;
-	}
+
+	ostringstream oss;
+	oss.fill('0');
+	oss << setw(2) << lev;
+	dat += oss.str();
+
 	dat += ".dat";
-
 	return dat;
-}
-
-string StudentWorld::formatNum(const int& num, const int& digits, const bool& spaces)	//used for displaying stats
-{
-	stack<char> chars;
-	string str;
-	int upper = (int)pow(10, digits + 1);
-
-	for (int mod = 10, div = 1; mod < upper && div < upper; mod *= 10, div *= 10)	//format by converting each digit to char
-	{
-		chars.push(((num % mod) / div) + TO_CHAR);
-	}
-	for (int i = 0; i < digits; i++)
-	{
-		str += chars.top();
-		chars.pop();
-	}
-
-	if (spaces)		//change leading 0s to leading spaces if specified
-	{
-		bool g0Found = false;
-		int i = 0;
-
-		while (!g0Found)
-		{
-			if (str[i] > '0' && str[i] <= '9' || i == str.length() - 1)
-				g0Found = true;
-			else
-				str[i] = ' ';
-			i++;
-		}
-	}
-
-	return str;
 }
 
 string StudentWorld::formatDisplayText(const int& score, const int& level, const int& lives, const int& health, const int& ammo, const int& bonus)
 {
 	string display = "Score: ";
-	string next = formatNum(score, 7, false);
 
-	display += next + "  Level: ";
-	next = formatNum(level, 2, false);
+	ostringstream oss; 
+	oss.fill('0');
+	oss << setw(7) << score << "  Level: " << setw(2) << level << "  Lives: ";
+	oss.fill(' ');
 
-	display += next + "  Lives: ";
-	next = formatNum(lives, 2, true);
-
-	display += next + "  Health: ";
 	double healthPD = (double)health / 20 * 100;
 	int healthPI = (int)healthPD;
-	next = formatNum(healthPI, 3, true);
-
-	display += next + "%  Ammo: ";
-	next = formatNum(ammo, 3, true);
-
-	display += next + "  Bonus: ";
-	next = formatNum(m_bonus, 4, true);
-	display += next;
-
+	oss << setw(2) << lives << "  Health: " << setw(3) << healthPI << "%  Ammo: " << setw(3) << ammo << "  Bonus: " << setw(4) << bonus;
+	
+	display += oss.str();
 	return display;
 }
 
@@ -118,13 +75,36 @@ void StudentWorld::createBullet(const int& x, const int& y, StudentWorld* world,
 	m_actors.push_back(new Bullet(x, y, this, dir));
 }
 
+void StudentWorld::dropGoodie(const int& x, const int& y, const char& goodie)
+{
+	switch (goodie)
+	{
+	case 'n':
+		return;
+	case 'l':
+		m_actors.push_back(new Life(x, y, this));
+		break;
+	case 'h':
+		m_actors.push_back(new Health(x, y, this));
+		break;
+	case 'a':
+		m_actors.push_back(new Ammo(x, y, this));
+		break;
+	}
+}
+
 int StudentWorld::init()	//loads current level and creates starting actors
 {							//TODO: create all actors after implementing them
 	m_bonus = 1000;
+	m_nextLev = false;
+	srand(static_cast<unsigned int>(time(nullptr)));
+	if (getLevel() == 5) return GWSTATUS_FINISHED_LEVEL;
 	Level lev(assetDirectory());
 	Level::LoadResult result = lev.loadLevel(formatLevel(getLevel()));
 
-	if (result == Level::load_fail_file_not_found || result == Level::load_fail_bad_format)
+	if (result == Level::load_fail_file_not_found)
+		return GWSTATUS_PLAYER_WON;
+	else if (result == Level::load_fail_bad_format)
 		return GWSTATUS_LEVEL_ERROR;	//bad level
 
 	for (int x = 0; x < VIEW_WIDTH; x++)	//use switch to allocate all Actors and store in m_actors
@@ -147,6 +127,28 @@ int StudentWorld::init()	//loads current level and creates starting actors
 			case Level::hole:
 				m_actors.push_back(new Hole(x, y, this));
 				break;
+			case Level::jewel:
+				m_actors.push_back(new Jewel(x, y, this));
+				m_nJewels++;
+				break;
+			case Level::exit:
+				m_actors.push_back(new Exit(x, y, this));
+				break;
+			case Level::extra_life:
+				m_actors.push_back(new Life(x, y, this));
+				break;
+			case Level::restore_health:
+				m_actors.push_back(new Health(x, y, this));
+				break;
+			case Level::ammo:
+				m_actors.push_back(new Ammo(x, y, this));
+				break;
+			case Level::horiz_snarlbot:
+				m_actors.push_back(new Kleptobot(x, y, this));
+				break;
+			case Level::vert_snarlbot:
+				m_actors.push_back(new Snarlbot(x, y, this, GraphObject::down));
+				break;
 			default:
 				break;
 			}
@@ -160,9 +162,7 @@ int StudentWorld::move()	//plays a tick
 {							//TODO: implement exiting the level when all jewels are collected
 	setDisplayText();
 
-	m_player->doSomething();	//allow all actors to doSomething
-
-	for (int i = 0; i < m_actors.size(); i++)
+	for (int i = 0; i < m_actors.size(); i++)		//allow all actors to doSomething
 	{
 		if (m_actors[i]->isAlive())
 			m_actors[i]->doSomething();
@@ -170,9 +170,17 @@ int StudentWorld::move()	//plays a tick
 		if (!m_player->isAlive())
 		{
 			decLives();
+			m_nJewels = 0;
 			return GWSTATUS_PLAYER_DIED;
 		}
+		else if (m_nextLev)
+		{
+			increaseScore(2000 + m_bonus);
+			playSound(SOUND_FINISHED_LEVEL);
+			return GWSTATUS_FINISHED_LEVEL;
+		}
 	}
+	m_player->doSomething();
 
 	deleteDead();
 	if (m_bonus > 0)

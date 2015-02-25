@@ -19,7 +19,7 @@ class StudentWorld : public GameWorld
 {
 public:
 	StudentWorld::StudentWorld(std::string assetDir)
-		: GameWorld(assetDir), m_bonus(1000)
+		: GameWorld(assetDir), m_bonus(1000), m_nJewels(0), m_nextLev(false)
 	{}
 
 	virtual int init();
@@ -28,14 +28,17 @@ public:
 
 	std::vector<Actor*> getActors() const;
 	Player* getPlayer() const;
+	int getJewels() const;
 	
 	void setDisplayText();
 	std::string formatDisplayText(const int& score, const int& level, const int& lives, const int& health, const int& ammo, const int& bonus);
-	std::string formatNum(const int& num, const int& digits, const bool& spaces);
 	std::string formatLevel(const int& lev);
 
 	void deleteDead();
+	void gotJewel();
+	void setAdvanceLevel();
 	void createBullet(const int& x, const int& y, StudentWorld* world, const GraphObject::Direction& dir);
+	void dropGoodie(const int& x, const int& y, const char& goodie);
 
 	virtual ~StudentWorld();
 
@@ -43,6 +46,8 @@ private:
 	std::vector<Actor*> m_actors;
 	Player* m_player;
 	int m_bonus;
+	int m_nJewels;
+	bool m_nextLev;
 };
 
 inline std::vector<Actor*> StudentWorld::getActors() const
@@ -50,5 +55,14 @@ inline std::vector<Actor*> StudentWorld::getActors() const
 
 inline Player* StudentWorld::getPlayer() const
 { return m_player; }
+
+inline int StudentWorld::getJewels() const
+{ return m_nJewels; }
+
+inline void StudentWorld::gotJewel()
+{ m_nJewels--; }
+
+inline void StudentWorld::setAdvanceLevel()
+{ m_nextLev = !m_nextLev; }
 
 #endif // STUDENTWORLD_H_
