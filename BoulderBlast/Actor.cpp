@@ -1,15 +1,37 @@
 #include <vector>
 #include "Actor.h"
 #include "StudentWorld.h"
-#include <iostream>
 using namespace std;
 
 //////////////////////////////////////////////
 //////////BASE CLASS IMPLEMENTATIONS//////////
 //////////////////////////////////////////////
+//ACTOR IMPLEMENTATION//
+void Actor::setDs()	//sets the changes in x and y required to move in the current direction
+{
+	switch (getDirection())
+	{
+	case none:
+		m_dx = 0, m_dy = 0;
+		break;
+	case up:
+		m_dx = 0, m_dy = 1;
+		break;
+	case down:
+		m_dx = 0, m_dy = -1;
+		break;
+	case left:
+		m_dx = -1, m_dy = 0;
+		break;
+	case right:
+		m_dx = 1, m_dy = 0;
+		break;
+	}
+}
+
 //ROBOT IMPLEMENTATIONS//
-Robot::Robot(int startID, int startX, int startY, StudentWorld* world, int health, Direction dir)
-	:Entity(startID, startX, startY, world, health, dir), m_ticks(0)
+Robot::Robot(int startID, int startX, int startY, StudentWorld* world, int health, int score, Direction dir)	//sets how many ticks a Robot "rests"
+	:Entity(startID, startX, startY, world, health, dir), m_ticks(0), m_scoreAward(score)						//before doingSomething
 {
 	m_tickCap = (28 - world->getLevel()) / 4;
 
@@ -17,19 +39,21 @@ Robot::Robot(int startID, int startX, int startY, StudentWorld* world, int healt
 		m_tickCap = 3;
 }
 
-bool Robot::nothingInTheWay(const int& pX, const int& pY, const vector<Actor*>& actors) const
-{
+bool Robot::nothingInTheWay(const int& pX, const int& pY, const vector<Actor*>& actors) const	//returns true if there is a clear line of sight from
+{																								//this to the Player at (x,y)
 	Wall* wall;
 	Boulder* boulder;
 	Entity* entity;
+	Factory* factory;
 
 	for (int i = 0; i < actors.size(); i++)
 	{
 		wall = dynamic_cast<Wall*>(actors[i]);
 		boulder = dynamic_cast<Boulder*>(actors[i]);
-		entity = dynamic_cast<Entity*>(actors[i]);
+		entity = dynamic_cast<Entity*>(actors[i]);	
+		factory = dynamic_cast<Factory*>(actors[i]);
 
-		if (wall != nullptr || boulder != nullptr || entity != nullptr)
+		if (wall != nullptr || boulder != nullptr || entity != nullptr || factory != nullptr)
 		{
 			switch (getDirection())
 			{
@@ -56,7 +80,7 @@ bool Robot::nothingInTheWay(const int& pX, const int& pY, const vector<Actor*>& 
 	return true;
 }
 
-bool Robot::decideToFire()
+bool Robot::decideToFire()		//returns true and fires at the Player if it is within line of sight of the Robot
 {
 	Player* player = getWorld()->getPlayer();
 	bool fire = false;
@@ -65,40 +89,40 @@ bool Robot::decideToFire()
 	{
 	case up:
 		if (player->getX() == getX() && player->getY() > getY())
-			fire = nothingInTheWay(player->getX(), player->getY(), getWorld()->getActors());
+			fire = nothingInTheWay(player->getX(), player->getY(), *getWorld()->getActors());
 		break;
 	case down:
 		if (player->getX() == getX() && player->getY() < getY())
-			fire = nothingInTheWay(player->getX(), player->getY(), getWorld()->getActors());
+			fire = nothingInTheWay(player->getX(), player->getY(), *getWorld()->getActors());
 		break;
 	case left:
 		if (player->getX() < getX() && player->getY() == getY())
-			fire = nothingInTheWay(player->getX(), player->getY(), getWorld()->getActors());
+			fire = nothingInTheWay(player->getX(), player->getY(), *getWorld()->getActors());
 		break;
 	case right:
 		if (player->getX() > getX() && player->getY() == getY())
-			fire = nothingInTheWay(player->getX(), player->getY(), getWorld()->getActors());
+			fire = nothingInTheWay(player->getX(), player->getY(), *getWorld()->getActors());
 		break;
 	}
 
 	return fire;
 }
 
-bool Robot::canMove(const int& x, const int& y) const
+bool Robot::canMove(const int& x, const int& y) const	//returns true if the movement to (x,y) is unobstructed
 {
 	if (x > 15 || x < 0 || y > 15 || y < 0)
 		return false;
 
 	Player* player = getWorld()->getPlayer();
-	vector<Actor*> actors = getWorld()->getActors();
+	vector<Actor*>* actors = getWorld()->getActors();
 
 	if (player->getX() == x && player->getY() == y)
 		return false;
-	for (int i = 0; i < actors.size(); i++)
+	for (int i = 0; i < actors->size(); i++)
 	{
-		if (actors[i]->getX() == x && actors[i]->getY() == y)
+		if (actors->at(i)->getX() == x && actors->at(i)->getY() == y)
 		{
-			if (!actors[i]->canBeSteppedOn())
+			if (!actors->at(i)->canBeSteppedOn())
 				return false;
 		}
 	}
@@ -110,15 +134,17 @@ bool Robot::canMove(const int& x, const int& y) const
 //////////DERIVED CLASS IMPLEMENTATIONS//////////
 /////////////////////////////////////////////////
 //BULLET IMPLEMENTATIONS//
-bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors at current location and acts appropriately
+bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors that can be hit at current location and hits them
 {
-	vector<Actor*> actors = getWorld()->getActors();
-	for (int i = 0; i < actors.size(); i++)
-	{
-		Wall* wall = dynamic_cast<Wall*>(actors[i]);	//TODO: add factory case
-		Entity* organism = dynamic_cast<Entity*>(actors[i]);
+	vector<Actor*>* actors = getWorld()->getActors();
 
-		if (actors[i]->getX() == getX() && actors[i]->getY() == getY())
+	for (int i = 0; i < actors->size(); i++)
+	{
+		Wall* wall = dynamic_cast<Wall*>(actors->at(i));
+		Entity* organism = dynamic_cast<Entity*>(actors->at(i));
+		Factory* factory = dynamic_cast<Factory*>(actors->at(i));
+
+		if (actors->at(i)->getX() == getX() && actors->at(i)->getY() == getY())
 		{
 			if (organism != nullptr)
 			{
@@ -131,13 +157,19 @@ bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors at 
 				setDead();
 				return false;
 			}
+			else if (factory != nullptr)
+			{
+				factory->damageBotOnTop();
+				setDead();
+				return false;
+			}
 		}
 	}
 
 	Player* player = getWorld()->getPlayer();
+
 	if (player->getX() == getX() && player->getY() == getY())
 	{
-		player->getHit();
 		player->onHit();
 		setDead();
 		return false;
@@ -145,27 +177,13 @@ bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors at 
 	return true;
 }
 
-void Bullet::doSomething()	//if alive, moves and hits actors if applicable
+void Bullet::doSomething()	//if alive, moves and hits any actors; if still alive, tries to hit actors again
 {
 	if (!isAlive())
 		return;
 	
 	bool doAgain = doBullet();
-	switch (getDirection())
-	{
-	case up:
-		moveTo(getX(), getY() + 1);
-		break;
-	case down:
-		moveTo(getX(), getY() - 1);
-		break;
-	case left:
-		moveTo(getX() - 1, getY());
-		break;
-	case right:
-		moveTo(getX() + 1, getY());
-		break;
-	}
+	moveTo(getX() + getDx(), getY() + getDy());
 
 	if (doAgain)
 		doBullet();
@@ -177,12 +195,13 @@ void Hole::doSomething()	//if alive, checks for a boulder at current location to
 	if (!isAlive())
 		return;
 
-	vector<Actor*> actors = getWorld()->getActors();
-	for (int i = 0; i < actors.size(); i++)
+	vector<Actor*>* actors = getWorld()->getActors();
+
+	for (int i = 0; i < actors->size(); i++)
 	{
-		if (actors[i]->getX() == getX() && actors[i]->getY() == getY())
+		if (actors->at(i)->getX() == getX() && actors->at(i)->getY() == getY())
 		{
-			Boulder* boulder = dynamic_cast<Boulder*>(actors[i]);
+			Boulder* boulder = dynamic_cast<Boulder*>(actors->at(i));
 			if (boulder != nullptr)
 			{
 				boulder->setDead();
@@ -193,7 +212,7 @@ void Hole::doSomething()	//if alive, checks for a boulder at current location to
 }
 
 //EXIT IMPLEMENTATION//
-void Exit::doSomething()
+void Exit::doSomething()	//if the Player is on the Exit and the Exit is visible, wins the level; else, makes itself visible if no Jewels remain
 {
 	if (getWorld()->getJewels() > 0)
 		return;
@@ -204,26 +223,87 @@ void Exit::doSomething()
 	}
 
 	if (getWorld()->getPlayer()->getX() == getX() && getWorld()->getPlayer()->getY() == getY())
+	{
+		getWorld()->increaseScore(2000);
+		getWorld()->playSound(SOUND_FINISHED_LEVEL);
 		getWorld()->setAdvanceLevel();
+	}
+}
+
+//FACTORY IMPLEMENTATIONS//
+void Factory::doSomething()	//if < 3 Kleptobots in 3x3 box around this and no Kleptobots are on the same space as this, has a 1/50 chance of spawning
+{							//a Kleptobot, depending on its type (angry/normal)
+	vector<Actor*>* actors = getWorld()->getActors();
+	int kleptoKount = 0;
+	bool kleptoOnTop = false;
+
+	for (int i = 0; i < actors->size(); i++)
+	{
+		if (actors->at(i)->getX() <= getX() + 3 && actors->at(i)->getX() >= getX() - 3 &&
+			actors->at(i)->getY() <= getY() + 3 && actors->at(i)->getY() >= getY() - 3)
+		{
+
+			Kleptobot* klepto = dynamic_cast<Kleptobot*>(actors->at(i));
+
+			if (klepto != nullptr)
+			{
+				kleptoKount++;
+
+				if (klepto->getX() == getX() && klepto->getY() == getY())
+					kleptoOnTop = true;
+			}
+		}
+	}
+
+	int spawnChance = rand() % 50;
+
+	if (kleptoKount < 3 && !kleptoOnTop && spawnChance == 0)
+	{
+		getWorld()->playSound(SOUND_ROBOT_BORN);
+
+		switch (m_angry)
+		{
+		case true: getWorld()->createKlepto(getX(), getY(), true); break;
+		case false: getWorld()->createKlepto(getX(), getY(), false); break;
+		}
+	}
+}
+
+void Factory::damageBotOnTop() const	//checks for Kleptobots on top of the Factory, damages one if there are any
+{
+	vector<Actor*>* actors = getWorld()->getActors();
+
+	for (int i = 0; i < actors->size(); i++)
+	{
+		if (actors->at(i)->getX() == getX() && actors->at(i)->getY() == getY())
+		{
+			Entity* entity = dynamic_cast<Entity*>(actors->at(i));
+
+			if (entity != nullptr)
+				entity->onHit();
+		}
+	}
 }
 
 //PLAYER IMPLEMENTATIONS//
-void Player::shoot(const int& x, const int& y, Direction dir)	//shoots a bullet and decrements ammo, if possible
+void Player::shoot()	//shoots a bullet and decrements ammo, if possible
 {
 	if (m_ammo < 1)
 		return;
 
 	getWorld()->playSound(SOUND_PLAYER_FIRE);
 	m_ammo--;
-	getWorld()->createBullet(x, y, getWorld(), dir);
+	getWorld()->createBullet(getX() + getDx(), getY() + getDy(), getDirection());
 }
 
-void Player::doSomething()	//checks for key input then does nothing, moves, shoots, or restarts
+void Player::doSomething()	//checks for key input then does nothing, moves, shoots, or resets the level
 {
-	if (!isAlive())	//TODO: implement dying, picking up items
+	if (!isAlive())
 		return;
 
 	int key;
+	bool moved = false;
+
 	if (getWorld()->getKey(key))
 	{
 		switch (key)
@@ -232,45 +312,34 @@ void Player::doSomething()	//checks for key input then does nothing, moves, shoo
 			setDead();
 			break;
 		case KEY_PRESS_SPACE:
-			switch (getDirection())
-			{
-			case up:
-				shoot(getX(), getY() + 1, up);
-				break;
-			case down:
-				shoot(getX(), getY() - 1, down);
-				break;
-			case left:
-				shoot(getX() - 1, getY(), left);
-				break;
-			case right:
-				shoot(getX() + 1, getY(), right);
-				break;
-			}
+			shoot();
 			break;
 		case KEY_PRESS_UP:
 			setDirection(up);
-			if (canMove(getX(), getY() + 1))
-				moveTo(getX(), getY() + 1);
+			setDs();
+			moved = true;
 			break;
 		case KEY_PRESS_DOWN:
 			setDirection(down);
-			if (canMove(getX(), getY() - 1))
-				moveTo(getX(), getY() - 1);
+			setDs();
+			moved = true;
 			break;
 		case KEY_PRESS_LEFT:
 			setDirection(left);
-			if (canMove(getX() - 1, getY()))
-				moveTo(getX() - 1, getY());
+			setDs();
+			moved = true;
 			break;
 		case KEY_PRESS_RIGHT:
 			setDirection(right);
-			if (canMove(getX() + 1, getY()))
-				moveTo(getX() + 1, getY());
+			setDs();
+			moved = true;
 			break;
 		default:
 			break;
 		}
+
+		if (moved && canMove(getX() + getDx(), getY() + getDy()))
+			moveTo(getX() + getDx(), getY() + getDy());
 	}
 }
 
@@ -289,44 +358,28 @@ void Player::onHit()	//gets hit or dies based on remaining health
 
 bool Player::canMove(const int& x, const int& y) const	//moves to x, y if not stopped by a robot, wall, or unpushable boulder
 {	
-	if (x > 15 || x < 0 || y > 15 || y < 0)	//TODO: check for robots as well
+	if (x > 15 || x < 0 || y > 15 || y < 0)
 		return false;
 
-	vector<Actor*> actors = getWorld()->getActors();
-	for (int i = 0; i < actors.size(); i++)
+	vector<Actor*>* actors = getWorld()->getActors();
+
+	for (int i = 0; i < actors->size(); i++)
 	{
-		if (actors[i]->getX() == x && actors[i]->getY() == y)
+		if (actors->at(i)->getX() == x && actors->at(i)->getY() == y)
 		{
-			Boulder* boulder = dynamic_cast<Boulder*>(actors[i]);
-			bool moveB = false;
+			Boulder* boulder = dynamic_cast<Boulder*>(actors->at(i));
 
 			if (boulder != nullptr)
 			{
-				switch (getDirection())
+				if (boulder->canMove(x + getDx(), y + getDy()))
 				{
-				case up:
-					moveB = boulder->canMove(x, y + 1);
-					break;
-				case down:
-					moveB = boulder->canMove(x, y - 1);
-					break;
-				case left:
-					moveB = boulder->canMove(x - 1, y);
-					break;
-				case right:
-					moveB = boulder->canMove(x + 1, y);
-					break;
-				}
-
-				if (moveB)
-				{
-					boulder->push(x, y, getDirection());
+					boulder->push(x + getDx(), y + getDy());
 					return true;
 				}
 				else
 					return false;
 			}
-			else if (!actors[i]->canBeSteppedOn())
+			else if (!actors->at(i)->canBeSteppedOn())
 				return false;
 		}
 	}
@@ -335,6 +388,11 @@ bool Player::canMove(const int& x, const int& y) const	//moves to x, y if not st
 }
 
 //BOULDER IMPLEMENTATIONS//
+void Boulder::push(const int& x, const int& y)
+{
+	moveTo(x, y);
+}
+
 void Boulder::onHit()
 {
 	getHit();
@@ -343,66 +401,52 @@ void Boulder::onHit()
 		setDead();
 }
 
-bool Boulder::canMove(const int& x, const int& y) const	//returns true if x, y is empty or contains a hole
+bool Boulder::canMove(const int& x, const int& y) const	//returns true if (x,y) is empty or contains a hole
 {
 	if (x > 15 || x < 0 || y > 15 || y < 0)
 		return false;
 
-	vector<Actor*> actors = getWorld()->getActors();
-	for (int i = 0; i < actors.size(); i++)
+	vector<Actor*>* actors = getWorld()->getActors();
+
+	for (int i = 0; i < actors->size(); i++)
 	{
-		Hole* hole = dynamic_cast<Hole*>(actors[i]);
-		if (actors[i]->getX() == x && actors[i]->getY() == y)
+		Hole* hole = dynamic_cast<Hole*>(actors->at(i));
+
+		if (actors->at(i)->getX() == x && actors->at(i)->getY() == y)
 		{
 			if (hole != nullptr)
 				return true;
 			return false;
 		}
 	}
-
 	return true;
 }
 
-void Boulder::push(const int& x, const int& y, const Direction& dir)	//moves in specified direction (called only by player)
-{
-	switch (dir)
-	{
-	case up:
-		moveTo(x, y + 1);
-		break;
-	case down:
-		moveTo(x, y - 1);
-		break;
-	case left:
-		moveTo(x - 1, y);
-		break;
-	case right:
-		moveTo(x + 1, y);
-		break;
-	}
-}
-
 //SNARLBOT IMPLEMENTATIONS//
-void Snarlbot::reverseDirection()
+void Snarlbot::reverseDirection()	//switches to opposite Direction from current
 {
 	switch (getDirection())
 	{
 	case up:
 		setDirection(down);
+		setDs();
 		break;
 	case down:
 		setDirection(up);
+		setDs();
 		break;
 	case left:
 		setDirection(right);
+		setDs();
 		break;
 	case right:
 		setDirection(left);
+		setDs();
 		break;
 	}
 }
 
-void Snarlbot::doSomething()
+void Snarlbot::doSomething()	//if alive and not resting, fires at the Player if in line of sight, or attempts to move
 {
 	if (!isAlive())
 		return;
@@ -411,68 +455,21 @@ void Snarlbot::doSomething()
 		setTicks(getTicks() + 1);
 		return;
 	}
-	setTicks(1);
 
+	setTicks(1);
 	bool fired = decideToFire();
 
-	switch (getDirection())
+	if (fired)
 	{
-	case up:
-		if (fired)
-		{
-			getWorld()->playSound(SOUND_ENEMY_FIRE);
-			getWorld()->createBullet(getX(), getY() + 1, getWorld(), up);
-		}
+		getWorld()->playSound(SOUND_ENEMY_FIRE);
+		getWorld()->createBullet(getX() + getDx(), getY() + getDy(), getDirection());
+	}
+	else
+	{
+		if (canMove(getX() + getDx(), getY() + getDy()))
+			moveTo(getX() + getDx(), getY() + getDy());
 		else
-		{
-			if (canMove(getX(), getY() + 1))
-				moveTo(getX(), getY() + 1);
-			else
-				reverseDirection();
-		}
-		break;
-	case down:
-		if (fired)
-		{
-			getWorld()->playSound(SOUND_ENEMY_FIRE);
-			getWorld()->createBullet(getX(), getY() - 1, getWorld(), down);
-		}
-		else
-		{
-			if (canMove(getX(), getY() - 1))
-				moveTo(getX(), getY() - 1);
-			else
-				reverseDirection();
-		}
-		break;
-	case left:
-		if (fired)
-		{
-			getWorld()->playSound(SOUND_ENEMY_FIRE);
-			getWorld()->createBullet(getX() - 1, getY(), getWorld(), left);
-		}
-		else
-		{
-			if (canMove(getX() - 1, getY()))
-				moveTo(getX() - 1, getY());
-			else
-				reverseDirection();
-		}
-		break;
-	case right:
-		if (fired)
-		{
-			getWorld()->playSound(SOUND_ENEMY_FIRE);
-			getWorld()->createBullet(getX() + 1, getY(), getWorld(), right);
-		}
-		else
-		{
-			if (canMove(getX() + 1, getY()))
-				moveTo(getX() + 1, getY());
-			else
-				reverseDirection();
-		}
-		break;
+			reverseDirection();
 	}
 }
 
@@ -485,13 +482,13 @@ void Snarlbot::onHit()
 	else
 	{
 		getWorld()->playSound(SOUND_ROBOT_DIE);
-		getWorld()->increaseScore(100);
+		getWorld()->increaseScore(getScore());
 		setDead();
 	}
 }
 
 //KLEPTOBOT IMPLEMENTATIONS//
-void Kleptobot::turn()
+void Kleptobot::turn()	//picks a new distance before turning and a new direction to move in and moves one space if possible
 {
 	setTurnDist();
 	setDist(1);
@@ -507,11 +504,13 @@ void Kleptobot::turn()
 			if (allChecked)
 			{
 				setDirection(up);
+				setDs();
 				return;
 			}
 			else if (!checked[0] && canMove(getX(), getY() + 1))
 			{
 				setDirection(up);
+				setDs();
 				moveTo(getX(), getY() + 1);
 				return;
 			}
@@ -525,11 +524,13 @@ void Kleptobot::turn()
 			if (allChecked)
 			{
 				setDirection(down);
+				setDs();
 				return;
 			}
 			else if (!checked[1] && canMove(getX(), getY() - 1))
 			{
 				setDirection(down);
+				setDs();
 				moveTo(getX(), getY() - 1);
 				return;
 			}
@@ -543,11 +544,13 @@ void Kleptobot::turn()
 			if (allChecked)
 			{
 				setDirection(left);
+				setDs();
 				return;
 			}
 			else if (!checked[2] && canMove(getX() - 1, getY()))
 			{
 				setDirection(left);
+				setDs();
 				moveTo(getX() - 1, getY());
 				return;
 			}
@@ -561,11 +564,13 @@ void Kleptobot::turn()
 			if (allChecked)
 			{
 				setDirection(right);
+				setDs();
 				return;
 			}
 			else if (!checked[3] && canMove(getX() + 1, getY()))
 			{
 				setDirection(right);
+				setDs();
 				moveTo(getX() + 1, getY());
 				return;
 			}
@@ -578,6 +583,7 @@ void Kleptobot::turn()
 		}
 
 		allChecked = true;
+
 		for (int i = 0; i < 4; i++)
 		{
 			if (!checked[i])
@@ -589,24 +595,25 @@ void Kleptobot::turn()
 	}
 }
 
-bool Kleptobot::attemptSteal()
+bool Kleptobot::attemptSteal()	//attempts to steal a Goodie with 1/10 chance if one is on the current space, returns true if successful
 {
 	if (m_goodie != 'n')
 		return false;
 
-	vector<Actor*> actors = getWorld()->getActors();
-	for (int i = 0; i < actors.size(); i++)
+	vector<Actor*>* actors = getWorld()->getActors();
+
+	for (int i = 0; i < actors->size(); i++)
 	{
-		if (actors[i]->getX() == getX() && actors[i]->getY() == getY())
+		if (actors->at(i)->getX() == getX() && actors->at(i)->getY() == getY())
 		{
 			int decider = rand() % 10;
-			Life* l = dynamic_cast<Life*>(actors[i]);
-			Health* h = dynamic_cast<Health*>(actors[i]);
-			Ammo* a = dynamic_cast<Ammo*>(actors[i]);
+			Life* l = dynamic_cast<Life*>(actors->at(i));
+			Health* h = dynamic_cast<Health*>(actors->at(i));
+			Ammo* a = dynamic_cast<Ammo*>(actors->at(i));
 
 			if (decider == 0 && (l != nullptr || h !=nullptr || a !=nullptr))
 			{
-				actors[i]->setDead();
+				actors->at(i)->setDead();
 				getWorld()->playSound(SOUND_ROBOT_MUNCH);
 
 				if (l != nullptr)
@@ -623,7 +630,7 @@ bool Kleptobot::attemptSteal()
 	return false;
 }
 
-void Kleptobot::doSomething()
+void Kleptobot::doSomething()	//if alive and not resting, attempts to steal; if unsuccessful, attempts to move
 {
 	if (!isAlive())
 		return;
@@ -637,68 +644,21 @@ void Kleptobot::doSomething()
 
 	setTicks(1);
 
-	switch (getDirection())
+	if (getDist() < getTurnDist())
 	{
-	case up:
-		if (getDist() < getTurnDist())
+		if (canMove(getX() + getDx(), getY() + getDy()))
 		{
-			if (canMove(getX(), getY() + 1))
-			{
-				moveTo(getX(), getY() + 1);
-				setDist(getDist() + 1);
-			}
-			else
-				turn();
+			moveTo(getX() + getDx(), getY() + getDy());
+			setDist(getDist() + 1);
 		}
 		else
 			turn();
-		break;
-	case down:
-		if (getDist() < getTurnDist())
-		{
-			if (canMove(getX(), getY() - 1))
-			{
-				moveTo(getX(), getY() - 1);
-				setDist(getDist() + 1);
-			}
-			else
-				turn();
-		}
-		else
-			turn();
-		break;
-	case left:
-		if (getDist() < getTurnDist())
-		{
-			if (canMove(getX() - 1, getY()))
-			{
-				moveTo(getX() - 1, getY());
-				setDist(getDist() + 1);
-			}
-			else
-				turn();
-		}
-		else
-			turn();
-		break;
-	case right:
-		if (getDist() < getTurnDist())
-		{
-			if (canMove(getX() + 1, getY()))
-			{
-				moveTo(getX() + 1, getY());
-				setDist(getDist() + 1);
-			}
-			else
-				turn();
-		}
-		else
-			turn();
-		break;
 	}
+	else
+		turn();
 }
 
-void Kleptobot::onHit()
+void Kleptobot::onHit()	//drops any carried goodies on death
 {
 	getHit();
 
@@ -707,9 +667,50 @@ void Kleptobot::onHit()
 	else
 	{
 		getWorld()->playSound(SOUND_ROBOT_DIE);
-		getWorld()->increaseScore(10);
+		getWorld()->increaseScore(getScore());
 		getWorld()->dropGoodie(getX(), getY(), m_goodie);
 		setDead();
+	}
+}
+
+//ANGRY KLEPTOBOT IMPLEMENTATION//
+void AngryKlepto::doSomething()	//same as Kleptobot doSomething() function except also attempts to shoot before attempting to steal or move
+{
+	if (!isAlive())
+		return;
+
+	if (getTicks() < getTickCap())
+	{
+		setTicks(getTicks() + 1);
+		return;
+	}
+
+	bool fired = decideToFire();
+
+	if (!fired && attemptSteal())
+		return;
+
+	setTicks(1);
+
+	if (fired)
+	{
+		getWorld()->playSound(SOUND_ENEMY_FIRE);
+		getWorld()->createBullet(getX() + getDx(), getY() + getDy(), getDirection());
+	}
+	else
+	{
+		if (getDist() < getTurnDist())
+		{
+			if (canMove(getX() + getDx(), getY() + getDy()))
+			{
+				moveTo(getX() + getDx(), getY() + getDy());
+				setDist(getDist() + 1);
+			}
+			else
+				turn();
+		}
+		else
+			turn();
 	}
 }
 

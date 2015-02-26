@@ -1,12 +1,11 @@
 #ifndef STUDENTWORLD_H_
 #define STUDENTWORLD_H_
 
+#include <vector>
+#include <string>
 #include "GameWorld.h"
 #include "GameConstants.h"
 #include "GraphObject.h"
-#include <vector>
-#include <map>
-#include <string>
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 const int TO_CHAR = 48;
@@ -26,7 +25,7 @@ public:
 	virtual int move();
 	virtual void cleanUp();
 
-	std::vector<Actor*> getActors() const;
+	std::vector<Actor*>* getActors();
 	Player* getPlayer() const;
 	int getJewels() const;
 	
@@ -37,8 +36,9 @@ public:
 	void deleteDead();
 	void gotJewel();
 	void setAdvanceLevel();
-	void createBullet(const int& x, const int& y, StudentWorld* world, const GraphObject::Direction& dir);
+	void createBullet(const int& x, const int& y, const GraphObject::Direction& dir);
 	void dropGoodie(const int& x, const int& y, const char& goodie);
+	void createKlepto(const int&x, const int& y, bool angry);
 
 	virtual ~StudentWorld();
 
@@ -50,8 +50,8 @@ private:
 	bool m_nextLev;
 };
 
-inline std::vector<Actor*> StudentWorld::getActors() const
-{ return m_actors; }
+inline std::vector<Actor*>* StudentWorld::getActors()
+{ return &m_actors; }
 
 inline Player* StudentWorld::getPlayer() const
 { return m_player; }

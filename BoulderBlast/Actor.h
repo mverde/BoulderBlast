@@ -15,7 +15,10 @@ class Actor : public GraphObject	//Actor is any item in the game that takes up a
 public:
 	Actor(int imageID, int startX, int startY, StudentWorld* world, Direction dir = none)
 		:GraphObject(imageID, startX, startY, dir), m_world(world), m_alive(true)
-	{ setVisible(true); }
+	{
+		setVisible(true);
+		setDs();
+	}
 
 	virtual void doSomething() = 0;
 	virtual bool canBeSteppedOn() const = 0;
@@ -24,12 +27,18 @@ public:
 	bool isAlive() const;
 	void setDead();
 
+	int getDx() const;
+	int getDy() const;
+	void setDs();
+
 	virtual ~Actor()
 	{ getGraphObjects().erase(this); }
 
 private:
 	bool m_alive;
 	StudentWorld* m_world;
+	int m_dx;
+	int m_dy;
 };
 
 inline StudentWorld* Actor::getWorld() const
@@ -40,6 +49,12 @@ inline bool Actor::isAlive() const
 
 inline void Actor::setDead()
 { m_alive = false; }
+
+inline int Actor::getDx() const
+{ return m_dx; }
+
+inline int Actor::getDy() const
+{ return m_dy; }
 
 //ENTITY//
 class Entity : public Actor	//includes players, robots, and boulders
@@ -78,21 +93,22 @@ inline int Entity::getHealth() const
 { return m_health; }
 
 //ROBOT//
-class Robot : public Entity
+class Robot : public Entity	//includes Snarlbots, Kleptobots, and Angry Kleptobots
 {
 public:
-	Robot(int startID, int startX, int startY, StudentWorld* world, int health, Direction dir);
+	Robot(int startID, int startX, int startY, StudentWorld* world, int health, int score, Direction dir);
 
 	virtual void doSomething() = 0;
 	virtual void onHit() = 0;
+	virtual bool canMove(const int& x, const int& y) const;
 
 	bool nothingInTheWay(const int& pX, const int& pY, const std::vector<Actor*>& actors) const;
 	bool decideToFire();
 
-	virtual bool canMove(const int& x, const int& y) const;
 	int getTickCap() const;
 	int getTicks() const;
 	void setTicks(const int& ticks);
+	int getScore() const;
 
 	virtual ~Robot()
 	{ getGraphObjects().erase(this); }
@@ -100,6 +116,7 @@ public:
 private:
 	int m_tickCap;
 	int m_ticks;
+	int m_scoreAward;
 };
 
 inline void Robot::setTicks(const int& ticks)
@@ -111,8 +128,11 @@ inline int Robot::getTickCap() const
 inline int Robot::getTicks() const
 { return m_ticks; }
 
+inline int Robot::getScore() const
+{ return m_scoreAward; }
+
 //GOODIE//
-class Goodie : public Actor
+class Goodie : public Actor	//includes Jewels, Lives, Health, and Ammo
 {
 public:
 	Goodie(int imageID, int startX, int startY, StudentWorld* world)
@@ -209,6 +229,29 @@ public:
 inline bool Exit::canBeSteppedOn() const
 { return true; }
 
+//FACTORY//
+class Factory : public Actor
+{
+public:
+	Factory(int starX, int startY, StudentWorld* world, bool angry)
+		:Actor(IID_ROBOT_FACTORY, starX, startY, world), m_angry(angry)
+	{}
+
+	virtual void doSomething();
+	virtual bool canBeSteppedOn() const;
+
+	void damageBotOnTop() const;
+
+	virtual ~Factory()
+	{ getGraphObjects().erase(this); }
+
+private:
+	bool m_angry;
+};
+
+inline bool Factory::canBeSteppedOn() const
+{ return false; }
+
 //PLAYER//
 class Player : public Entity
 {
@@ -219,7 +262,8 @@ public:
 
 	virtual void doSomething();
 	virtual void onHit();
-	void shoot(const int& x, const int& y, Direction dir);
+
+	void shoot();
 	void restoreHealth();
 	void gotAmmo();
 
@@ -253,7 +297,8 @@ public:
 	virtual void doSomething();
 	virtual void onHit();
 	virtual bool canMove(const int& x, const int& y) const;
-	virtual void push(const int& x, const int& y, const Direction& dir);
+
+	void push(const int& x, const int& y);
 
 	virtual ~Boulder()
 	{ getGraphObjects().erase(this); }
@@ -267,7 +312,7 @@ class Snarlbot : public Robot
 {
 public:
 	Snarlbot(int startX, int startY, StudentWorld* world, Direction dir)
-		:Robot(IID_SNARLBOT, startX, startY, world, 10, dir)
+		:Robot(IID_SNARLBOT, startX, startY, world, 10, 100, dir)
 	{}
 
 	void reverseDirection();
@@ -280,11 +325,11 @@ public:
 };
 
 //KLEPTOBOT//
-class Kleptobot : public Robot
+class Kleptobot : public Robot	//includes Kleptobots and Angry Kleptobots
 {
 public:
-	Kleptobot(int startX, int startY, StudentWorld* world)
-		:Robot(IID_KLEPTOBOT, startX, startY, world, 5, right), m_dist(0), m_goodie('n')
+	Kleptobot(int startX, int startY, StudentWorld* world, int score = 10)
+		:Robot(IID_KLEPTOBOT, startX, startY, world, 5, score, right), m_dist(0), m_goodie('n')
 	{ m_turnDist = (rand() % 6) + 1; }
 
 	void turn();
@@ -318,6 +363,20 @@ inline int Kleptobot::getDist() const
 
 inline void Kleptobot::setDist(const int& dist)
 { m_dist = dist; }
+
+//ANGRY KLEPTOBOT//
+class AngryKlepto : public Kleptobot
+{
+public:
+	AngryKlepto(int startX, int startY, StudentWorld* world)
+		:Kleptobot(startX, startY, world, 20)
+	{ setHealth(8); }
+
+	virtual void doSomething();
+
+	virtual ~AngryKlepto()
+	{ getGraphObjects().erase(this); }
+};
 
 
 //JEWEL//

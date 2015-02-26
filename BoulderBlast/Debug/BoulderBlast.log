@@ -1,12 +1,23 @@
-﻿Build started 2/24/2015 11:44:05 PM.
+﻿Build started 2/26/2015 12:04:04 AM.
      1>Project "C:\Users\Martin\Documents\Visual Studio 2013\Projects\BoulderBlast\BoulderBlast\BoulderBlast.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D GLUT_BUILDING_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt StudentWorld.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D GLUT_BUILDING_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Actor.cpp StudentWorld.cpp
+         Actor.cpp
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(49): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(121): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(141): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(200): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(240): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(276): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(366): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(411): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(605): warning C4018: '<' : signed/unsigned mismatch
+         Generating Code...
+         Compiling...
          StudentWorld.cpp
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\studentworld.cpp(62): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\studentworld.cpp(165): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\studentworld.cpp(195): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\studentworld.cpp(205): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\studentworld.cpp(69): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\studentworld.cpp(185): warning C4018: '<' : signed/unsigned mismatch
+         Generating Code...
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Martin\Documents\Visual Studio 2013\Projects\BoulderBlast\Debug\BoulderBlast.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Martin\Documents\Visual Studio 2013\Projects\BoulderBlast\Debug\BoulderBlast.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Martin\Documents\Visual Studio 2013\Projects\BoulderBlast\Debug\BoulderBlast.lib" /MACHINE:X86 Debug\Actor.obj
          Debug\GameController.obj
@@ -18,4 +29,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.34
+Time Elapsed 00:00:02.17
