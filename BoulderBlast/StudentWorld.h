@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdlib>
 #include "GameWorld.h"
 #include "GameConstants.h"
 #include "GraphObject.h"
@@ -38,7 +39,7 @@ public:
 	void setAdvanceLevel();
 	void createBullet(const int& x, const int& y, const GraphObject::Direction& dir);
 	void dropGoodie(const int& x, const int& y, const char& goodie);
-	void createKlepto(const int&x, const int& y, bool angry);
+	void createKlepto(const int&x, const int& y, const bool& angry);
 
 	virtual ~StudentWorld();
 

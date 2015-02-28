@@ -1,6 +1,7 @@
 #ifndef ACTOR_H_
 #define ACTOR_H_
 
+#include <cstdlib>
 #include "GraphObject.h"
 #include "GameConstants.h"
 
@@ -25,7 +26,7 @@ public:
 
 	StudentWorld* getWorld() const;
 	bool isAlive() const;
-	void setDead();
+	void Die();
 
 	int getDx() const;
 	int getDy() const;
@@ -47,7 +48,7 @@ inline StudentWorld* Actor::getWorld() const
 inline bool Actor::isAlive() const
 { return m_alive; }
 
-inline void Actor::setDead()
+inline void Actor::Die()
 { m_alive = false; }
 
 inline int Actor::getDx() const
@@ -62,7 +63,7 @@ class Entity : public Actor	//includes players, robots, and boulders
 public:
 	Entity(int imageID, int startX, int startY, StudentWorld* world, int health, Direction dir = none)
 		:Actor(imageID, startX, startY, world, dir), m_health(health)
-	{ setVisible(true); }
+	{}
 
 	virtual void doSomething() = 0;
 	virtual void onHit() = 0;
@@ -96,7 +97,7 @@ inline int Entity::getHealth() const
 class Robot : public Entity	//includes Snarlbots, Kleptobots, and Angry Kleptobots
 {
 public:
-	Robot(int startID, int startX, int startY, StudentWorld* world, int health, int score, Direction dir);
+	Robot(int imageID, int startX, int startY, StudentWorld* world, int health, int score, Direction dir);
 
 	virtual void doSomething() = 0;
 	virtual void onHit() = 0;
@@ -328,9 +329,9 @@ public:
 class Kleptobot : public Robot	//includes Kleptobots and Angry Kleptobots
 {
 public:
-	Kleptobot(int startX, int startY, StudentWorld* world, int score = 10)
-		:Robot(IID_KLEPTOBOT, startX, startY, world, 5, score, right), m_dist(0), m_goodie('n')
-	{ m_turnDist = (rand() % 6) + 1; }
+	Kleptobot(int startX, int startY, StudentWorld* world, int health = 5, int imageID = IID_KLEPTOBOT, int score = 10)
+		:Robot(imageID, startX, startY, world, health, score, right), m_dist(0), m_goodie('n'), m_turnDist((rand() % 6) + 1)
+	{}
 
 	void turn();
 	bool attemptSteal();
@@ -369,8 +370,8 @@ class AngryKlepto : public Kleptobot
 {
 public:
 	AngryKlepto(int startX, int startY, StudentWorld* world)
-		:Kleptobot(startX, startY, world, 20)
-	{ setHealth(8); }
+		:Kleptobot(startX, startY, world, 8, IID_ANGRY_KLEPTOBOT, 20)
+	{}
 
 	virtual void doSomething();
 

@@ -1,4 +1,4 @@
-﻿Build started 2/26/2015 12:04:04 AM.
+﻿Build started 2/27/2015 11:03:51 PM.
      1>Project "C:\Users\Martin\Documents\Visual Studio 2013\Projects\BoulderBlast\BoulderBlast\BoulderBlast.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D GLUT_BUILDING_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Actor.cpp StudentWorld.cpp
@@ -9,9 +9,9 @@
      1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(200): warning C4018: '<' : signed/unsigned mismatch
      1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(240): warning C4018: '<' : signed/unsigned mismatch
      1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(276): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(366): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(411): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(605): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(378): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(423): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\martin\documents\visual studio 2013\projects\boulderblast\boulderblast\actor.cpp(615): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
          Compiling...
          StudentWorld.cpp
@@ -29,4 +29,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.17
+Time Elapsed 00:00:02.32

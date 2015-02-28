@@ -100,7 +100,7 @@ void StudentWorld::dropGoodie(const int& x, const int& y, const char& goodie)
 	}
 }
 
-void StudentWorld::createKlepto(const int& x, const int& y, bool angry)
+void StudentWorld::createKlepto(const int& x, const int& y, const bool& angry)
 {
 	if (!angry)
 		m_actors.push_back(new Kleptobot(x, y, this));

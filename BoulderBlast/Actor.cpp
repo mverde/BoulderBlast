@@ -30,8 +30,8 @@ void Actor::setDs()	//sets the changes in x and y required to move in the curren
 }
 
 //ROBOT IMPLEMENTATIONS//
-Robot::Robot(int startID, int startX, int startY, StudentWorld* world, int health, int score, Direction dir)	//sets how many ticks a Robot "rests"
-	:Entity(startID, startX, startY, world, health, dir), m_ticks(0), m_scoreAward(score)						//before doingSomething
+Robot::Robot(int imageID, int startX, int startY, StudentWorld* world, int health, int score, Direction dir)	//sets how many ticks a Robot "rests"
+	:Entity(imageID, startX, startY, world, health, dir), m_ticks(0), m_scoreAward(score)						//before doingSomething
 {
 	m_tickCap = (28 - world->getLevel()) / 4;
 
@@ -149,18 +149,18 @@ bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors tha
 			if (organism != nullptr)
 			{
 				organism->onHit();
-				setDead();
+				Die();
 				return false;
 			}
 			else if (wall != nullptr)
 			{
-				setDead();
+				Die();
 				return false;
 			}
 			else if (factory != nullptr)
 			{
 				factory->damageBotOnTop();
-				setDead();
+				Die();
 				return false;
 			}
 		}
@@ -171,7 +171,7 @@ bool Bullet::doBullet()	//returns false if dead, otherwise checks for actors tha
 	if (player->getX() == getX() && player->getY() == getY())
 	{
 		player->onHit();
-		setDead();
+		Die();
 		return false;
 	}
 	return true;
@@ -204,8 +204,8 @@ void Hole::doSomething()	//if alive, checks for a boulder at current location to
 			Boulder* boulder = dynamic_cast<Boulder*>(actors->at(i));
 			if (boulder != nullptr)
 			{
-				boulder->setDead();
-				setDead();
+				boulder->Die();
+				Die();
 			}
 		}
 	}
@@ -309,29 +309,41 @@ void Player::doSomething()	//checks for key input then does nothing, moves, shoo
 		switch (key)
 		{
 		case KEY_PRESS_ESCAPE:
-			setDead();
+			Die();
 			break;
 		case KEY_PRESS_SPACE:
 			shoot();
 			break;
 		case KEY_PRESS_UP:
-			setDirection(up);
-			setDs();
+			if (getDirection() != up)
+			{
+				setDirection(up);
+				setDs();
+			}
 			moved = true;
 			break;
 		case KEY_PRESS_DOWN:
-			setDirection(down);
-			setDs();
+			if (getDirection() != down)
+			{
+				setDirection(down);
+				setDs();
+			}
 			moved = true;
 			break;
 		case KEY_PRESS_LEFT:
-			setDirection(left);
-			setDs();
+			if (getDirection() != left)
+			{
+				setDirection(left);
+				setDs();
+			}
 			moved = true;
 			break;
 		case KEY_PRESS_RIGHT:
-			setDirection(right);
-			setDs();
+			if (getDirection() != right)
+			{
+				setDirection(right);
+				setDs();
+			}
 			moved = true;
 			break;
 		default:
@@ -352,7 +364,7 @@ void Player::onHit()	//gets hit or dies based on remaining health
 	else
 	{
 		getWorld()->playSound(SOUND_PLAYER_DIE);
-		setDead();
+		Die();
 	}
 }
 
@@ -398,7 +410,7 @@ void Boulder::onHit()
 	getHit();
 
 	if (getHealth() <= 0)
-		setDead();
+		Die();
 }
 
 bool Boulder::canMove(const int& x, const int& y) const	//returns true if (x,y) is empty or contains a hole
@@ -414,9 +426,7 @@ bool Boulder::canMove(const int& x, const int& y) const	//returns true if (x,y) 
 
 		if (actors->at(i)->getX() == x && actors->at(i)->getY() == y)
 		{
-			if (hole != nullptr)
-				return true;
-			return false;
+			return hole != nullptr;
 		}
 	}
 	return true;
@@ -483,7 +493,7 @@ void Snarlbot::onHit()
 	{
 		getWorld()->playSound(SOUND_ROBOT_DIE);
 		getWorld()->increaseScore(getScore());
-		setDead();
+		Die();
 	}
 }
 
@@ -613,7 +623,7 @@ bool Kleptobot::attemptSteal()	//attempts to steal a Goodie with 1/10 chance if 
 
 			if (decider == 0 && (l != nullptr || h !=nullptr || a !=nullptr))
 			{
-				actors->at(i)->setDead();
+				actors->at(i)->Die();
 				getWorld()->playSound(SOUND_ROBOT_MUNCH);
 
 				if (l != nullptr)
@@ -640,8 +650,10 @@ void Kleptobot::doSomething()	//if alive and not resting, attempts to steal; if 
 		return;
 	}
 	else if (attemptSteal())
+	{
+		setTicks(1);
 		return;
-
+	}
 	setTicks(1);
 
 	if (getDist() < getTurnDist())
@@ -669,7 +681,7 @@ void Kleptobot::onHit()	//drops any carried goodies on death
 		getWorld()->playSound(SOUND_ROBOT_DIE);
 		getWorld()->increaseScore(getScore());
 		getWorld()->dropGoodie(getX(), getY(), m_goodie);
-		setDead();
+		Die();
 	}
 }
 
@@ -688,7 +700,10 @@ void AngryKlepto::doSomething()	//same as Kleptobot doSomething() function excep
 	bool fired = decideToFire();
 
 	if (!fired && attemptSteal())
+	{
+		setTicks(1);
 		return;
+	}
 
 	setTicks(1);
 
@@ -723,7 +738,7 @@ void Jewel::doSomething()
 	if (getWorld()->getPlayer()->getX() == getX() && getWorld()->getPlayer()->getY() == getY())
 	{
 		getWorld()->increaseScore(50);
-		setDead();
+		Die();
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->gotJewel();
 	}
@@ -738,7 +753,7 @@ void Life::doSomething()
 	if (getWorld()->getPlayer()->getX() == getX() && getWorld()->getPlayer()->getY() == getY())
 	{
 		getWorld()->increaseScore(1000);
-		setDead();
+		Die();
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->incLives();
 	}
@@ -753,7 +768,7 @@ void Health::doSomething()
 	if (getWorld()->getPlayer()->getX() == getX() && getWorld()->getPlayer()->getY() == getY())
 	{
 		getWorld()->increaseScore(500);
-		setDead();
+		Die();
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->getPlayer()->restoreHealth();
 	}
@@ -768,7 +783,7 @@ void Ammo::doSomething()
 	if (getWorld()->getPlayer()->getX() == getX() && getWorld()->getPlayer()->getY() == getY())
 	{
 		getWorld()->increaseScore(100);
-		setDead();
+		Die();
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->getPlayer()->gotAmmo();
 	}
